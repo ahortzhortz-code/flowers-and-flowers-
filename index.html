@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ร้านดอกไม้สุดชิล 🌸</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Mali', cursive;
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#f0e4d8 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+        
+        .wrapper-shape {
+            clip-path: polygon(15% 100%, 85% 100%, 100% 0, 0 0);
+        }
+
+        /* Animation for customer arrival */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: popIn 0.5s ease-out forwards;
+        }
+
+        /* Animation for notifications */
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            20% { opacity: 1; transform: translate(-50%, 0); }
+            80% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+        .toast-message {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: floatUp 2s ease-in-out forwards;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .pattern-newspaper {
+            background-image: repeating-linear-gradient(transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+        }
+        
+        .pattern-lace {
+            border: 4px dashed #e5e7eb;
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col items-center py-6 px-4">
+
+    <header class="w-full max-w-4xl flex justify-between items-center bg-white/80 backdrop-blur-sm p-4 rounded-2xl shadow-sm mb-6 border border-pink-100">
+        <h1 class="text-2xl md:text-3xl font-bold text-pink-500 flex items-center gap-2">
+            🌸 ร้านดอกไม้ชิลๆ
+        </h1>
+        <div class="flex gap-2">
+            <div class="text-sm md:text-xl font-semibold bg-blue-100 text-blue-700 px-3 md:px-4 py-2 rounded-full shadow-inner">
+                เลเวล: <span id="level-display">1</span>
+            </div>
+            <div class="text-sm md:text-xl font-semibold bg-pink-100 text-pink-700 px-3 md:px-4 py-2 rounded-full shadow-inner">
+                ยอดขาย: <span id="score-display">0</span> ช่อ
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Left Side: Customer & Order -->
+        <section class="bg-white p-6 rounded-3xl shadow-md border border-orange-100 flex flex-col items-center justify-center relative">
+            <h2 class="text-lg text-gray-500 font-semibold mb-2">ลูกค้ามารอแล้ว!</h2>
+            
+            <!-- Order Speech Bubble -->
+            <div id="speech-bubble" class="bg-blue-50 border-2 border-blue-200 rounded-3xl p-4 mb-4 relative w-full max-w-[280px] shadow-sm animate-pop-in">
+                <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-blue-50 border-b-2 border-r-2 border-blue-200 rotate-45"></div>
+                <p class="text-center text-sm mb-3 font-semibold text-gray-700">"ขอจัดช่อดอกไม้ตามนี้หน่อยจ้า..."</p>
+                <div class="flex flex-col justify-center items-center gap-3 bg-white p-3 rounded-2xl shadow-inner">
+                    <!-- Order requirements will be injected here -->
+                    <div class="flex items-center gap-2 w-full justify-center border-b pb-2 border-gray-100">
+                        <div id="order-wrapper" class="w-8 h-8 rounded-md border flex items-center justify-center" title="กระดาษห่อ"></div>
+                        <div class="text-gray-400 text-sm">+</div>
+                        <div id="order-ribbon" class="w-8 h-3 rounded-full" title="ริบบิ้น"></div>
+                    </div>
+                    <div id="order-flowers-container" class="flex flex-wrap justify-center gap-2 text-lg">
+                        <!-- Flowers order injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Character -->
+            <div id="customer-emoji" class="text-8xl mt-2 animate-pop-in">
+                👩
+            </div>
+        </section>
+
+        <!-- Right Side: Workspace & Inventory -->
+        <section class="bg-white p-6 rounded-3xl shadow-md border border-green-100 flex flex-col">
+            
+            <!-- Workspace Table (Where the bouquet is built) -->
+            <div class="bg-green-50 rounded-2xl p-6 mb-6 h-auto min-h-[18rem] flex flex-col items-center justify-center relative shadow-inner border border-green-100 gap-4">
+                <h2 class="absolute top-4 left-4 text-gray-400 font-semibold text-sm">โต๊ะจัดดอกไม้</h2>
+                
+                <!-- The Bouquet -->
+                <div id="active-bouquet" class="relative w-32 h-56 transition-transform hover:scale-105 cursor-pointer mt-4">
+                    <!-- Flower (Back/Top) -->
+                    <div id="build-flower" class="absolute bottom-24 left-0 w-full h-32 flex flex-wrap-reverse justify-center content-start gap-1 z-10 transition-all duration-300"></div>
+                    
+                    <!-- Wrapper (Middle) -->
+                    <div id="build-wrapper" class="absolute bottom-0 left-0 w-full h-28 wrapper-shape bg-gray-200 shadow-lg z-20 transition-all duration-300 opacity-50"></div>
+                    
+                    <!-- Ribbon (Front) -->
+                    <div id="build-ribbon" class="absolute bottom-12 left-0 w-full h-5 z-30 flex items-center justify-center transition-all duration-300 scale-0">
+                        <div class="w-full h-full bg-gray-400 shadow-md relative">
+                            <!-- Bow center -->
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-inherit rounded-full shadow-lg border-2 border-white/20"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-4 w-full justify-center z-40 relative mt-4">
+                    <button onclick="resetBouquet()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-3 px-6 rounded-2xl shadow-sm transition-all text-base font-bold active:scale-95" title="เริ่มจัดใหม่">
+                        🗑️ ล้างโต๊ะ
+                    </button>
+                    <button onclick="submitOrder()" class="bg-green-400 hover:bg-green-500 text-white py-3 px-8 rounded-2xl shadow-md transition-all active:scale-95 flex items-center gap-2 text-lg font-bold">
+                        ✨ ส่งมอบ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Inventory Section -->
+            <div class="flex-1 flex flex-col gap-4">
+                
+                <!-- Wrappers (4 types) -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">1. เลือกกระดาษห่อ (4 แบบ)</h3>
+                    <div class="grid grid-cols-4 gap-2" id="inventory-wrappers">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Flowers -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">2. เลือกดอกไม้ (กดซ้ำเพื่อเพิ่มจำนวน)</h3>
+                    <div class="grid grid-cols-4 gap-2" id="inventory-flowers">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Ribbons (3 types) -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">3. เลือกรัดริบบิ้น (3 แบบ)</h3>
+                    <div class="grid grid-cols-3 gap-2" id="inventory-ribbons">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Container -->
+    <div id="notification-area"></div>
+
+    <script>
+        // --- GAME DATA ---
+        const WRAPPERS = [
+            { id: 'w1', name: 'สีน้ำตาลคราฟท์', colorClass: 'bg-[#C19A6B]', cssExtra: '' },
+            { id: 'w2', name: 'สีขาวลูกไม้', colorClass: 'bg-white', cssExtra: 'pattern-lace' },
+            { id: 'w3', name: 'สีชมพูใส', colorClass: 'bg-pink-300/80', cssExtra: 'backdrop-blur-sm' },
+            { id: 'w4', name: 'ลายหนังสือพิมพ์', colorClass: 'bg-gray-200', cssExtra: 'pattern-newspaper' }
+        ];
+
+        const FLOWERS = [
+            { id: 'f1', name: 'กุหลาบ', emoji: '🌹', unlockLevel: 1 },
+            { id: 'f2', name: 'ทิวลิป', emoji: '🌷', unlockLevel: 1 },
+            { id: 'f3', name: 'ทานตะวัน', emoji: '🌻', unlockLevel: 1 },
+            { id: 'f4', name: 'เดซี่', emoji: '🌼', unlockLevel: 2 },
+            { id: 'f5', name: 'ดอกบัว', emoji: '🪷', unlockLevel: 3 },
+            { id: 'f6', name: 'ชบา', emoji: '🌺', unlockLevel: 4 },
+            { id: 'f7', name: 'ซากุระ', emoji: '🌸', unlockLevel: 5 },
+            { id: 'f8', name: 'คาร์เนชั่น', emoji: '🏵️', unlockLevel: 5 }
+        ];
+
+        const RIBBONS = [
+            { id: 'r1', name: 'แดง', colorClass: 'bg-red-500' },
+            { id: 'r2', name: 'ฟ้า', colorClass: 'bg-blue-400' },
+            { id: 'r3', name: 'ทอง', colorClass: 'bg-yellow-400' }
+        ];
+
+        const CUSTOMER_EMOJIS = ['👩', '👨', '👧', '👦', '👵', '👴', '👱‍♀️️', '🧔‍♂️', '🧑‍𹦰', '👩‍𹦰'];
+
+        // Level Configuration: minScore required, max variety of flowers, max total quantity
+        const LEVELS = [
+            { level: 1, minScore: 0, maxTypes: 1, maxQty: 3 },
+            { level: 2, minScore: 3, maxTypes: 2, maxQty: 4 },
+            { level: 3, minScore: 7, maxTypes: 2, maxQty: 6 },
+            { level: 4, minScore: 12, maxTypes: 3, maxQty: 8 },
+            { level: 5, minScore: 20, maxTypes: 4, maxQty: 10 }
+        ];
+
+        // --- GAME STATE ---
+        let currentLevel = 1;
+        let score = 0;
+        let currentOrder = { wrapper: null, flowers: [], ribbon: null };
+        let playerBouquet = { wrapper: null, flowers: {}, ribbon: null };
+
+        // --- DOM ELEMENTS ---
+        const domOrderWrapper = document.getElementById('order-wrapper');
+        const domOrderFlowersContainer = document.getElementById('order-flowers-container');
+        const domOrderRibbon = document.getElementById('order-ribbon');
+        
+        const domBuildWrapper = document.getElementById('build-wrapper');
+        const domBuildFlower = document.getElementById('build-flower');
+        const domBuildRibbon = document.getElementById('build-ribbon');
+        
+        const domCustomer = document.getElementById('customer-emoji');
+        const domSpeechBubble = document.getElementById('speech-bubble');
+        const domScore = document.getElementById('score-display');
+        const domLevel = document.getElementById('level-display');
+        const notifArea = document.getElementById('notification-area');
+
+        // --- INITIALIZATION ---
+        function initGame() {
+            checkLevel();
+            renderInventory();
+            generateNewCustomer();
+        }
+
+        // --- STREAMING_CHUNK:Handling Level & Inventory Logic... ---
+        function checkLevel() {
+            let newLevel = 1;
+            for (let i = LEVELS.length - 1; i >= 0; i--) {
+                if (score >= LEVELS[i].minScore) {
+                    newLevel = LEVELS[i].level;
+                    break;
+                }
+            }
+            if (newLevel > currentLevel) {
+                currentLevel = newLevel;
+                domLevel.innerText = currentLevel;
+                showToast(`🎉 เลเวลอัพเป็นเลเวล ${currentLevel}! ปลดล็อคดอกไม้ใหม่`, "bg-purple-500");
+                renderInventory();
+            }
+        }
+
+        function renderInventory() {
+            // Render Wrappers
+            const wrapContainer = document.getElementById('inventory-wrappers');
+            wrapContainer.innerHTML = '';
+            WRAPPERS.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = `h-12 rounded-lg border-2 border-transparent hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all ${item.colorClass} ${item.cssExtra}`;
+                btn.title = item.name;
+                btn.onclick = () => selectItem('wrapper', item);
+                wrapContainer.appendChild(btn);
+            });
+
+            // Render Flowers (with locks and counters)
+            const flowerContainer = document.getElementById('inventory-flowers');
+            flowerContainer.innerHTML = '';
+            FLOWERS.forEach(item => {
+                const isLocked = item.unlockLevel > currentLevel;
+                const count = playerBouquet.flowers[item.id] || 0;
+                const btn = document.createElement('button');
+                
+                btn.className = `relative h-14 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-3xl flex items-center justify-center transition-all ${isLocked ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'hover:bg-green-50'}`;
+                btn.title = isLocked ? `ปลดล็อคเลเวล ${item.unlockLevel}` : item.name;
+                btn.disabled = isLocked;
+                
+                btn.innerHTML = `${item.emoji} ${isLocked ? '<span class="absolute bottom-1 right-1 text-xs drop-shadow-sm">🔒</span>' : ''}`;
+                
+                // Add badge if this flower is in bouquet
+                if (count > 0) {
+                    const badge = document.createElement('div');
+                    badge.className = 'absolute -top-2 -right-2 bg-pink-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-sm border-2 border-white animate-pop-in';
+                    badge.innerText = count;
+                    btn.appendChild(badge);
+                }
+
+                btn.onclick = () => selectItem('flower', item);
+                flowerContainer.appendChild(btn);
+            });
+
+            // Render Ribbons
+            const ribbonContainer = document.getElementById('inventory-ribbons');
+            ribbonContainer.innerHTML = '';
+            RIBBONS.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = `h-10 w-full rounded-full border-2 border-transparent hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-400 flex items-center justify-center transition-all shadow-sm bg-gray-100`;
+                btn.title = item.name;
+                btn.onclick = () => selectItem('ribbon', item);
+                
+                const band = document.createElement('div');
+                band.className = `w-full h-3 ${item.colorClass} relative pointer-events-none`;
+                const bow = document.createElement('div');
+                bow.className = `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full ${item.colorClass} shadow-md`;
+                band.appendChild(bow);
+                btn.appendChild(band);
+                
+                ribbonContainer.appendChild(btn);
+            });
+        }
+
+        // --- STREAMING_CHUNK:Generating Multi-Flower Orders... ---
+        function generateNewCustomer() {
+            const currentLvlData = LEVELS.find(l => l.level === currentLevel);
+            
+            const randomWrapper = WRAPPERS[Math.floor(Math.random() * WRAPPERS.length)];
+            const randomRibbon = RIBBONS[Math.floor(Math.random() * RIBBONS.length)];
+            
+            // Pick random allowed flowers
+            const availableFlowers = FLOWERS.filter(f => f.unlockLevel <= currentLevel);
+            const numTypes = Math.floor(Math.random() * currentLvlData.maxTypes) + 1;
+            const selectedTypes = [...availableFlowers].sort(() => 0.5 - Math.random()).slice(0, numTypes);
+            
+            // Determine quantities
+            let remainingQty = Math.floor(Math.random() * (currentLvlData.maxQty - numTypes + 1)) + numTypes; 
+            
+            let orderFlowers = [];
+            selectedTypes.forEach((f, index) => {
+                let qty = 1;
+                if (index === selectedTypes.length - 1) {
+                    qty = remainingQty; 
+                } else {
+                    const maxForThis = remainingQty - (selectedTypes.length - 1 - index);
+                    qty = Math.floor(Math.random() * maxForThis) + 1;
+                    remainingQty -= qty;
+                }
+                orderFlowers.push({ flower: f, qty: qty });
+            });
+
+            currentOrder = { wrapper: randomWrapper, flowers: orderFlowers, ribbon: randomRibbon };
+
+            // Update UI
+            domCustomer.innerText = CUSTOMER_EMOJIS[Math.floor(Math.random() * CUSTOMER_EMOJIS.length)];
+            domCustomer.classList.remove('animate-pop-in');
+            domSpeechBubble.classList.remove('animate-pop-in');
+            void domCustomer.offsetWidth; // trigger reflow
+            domCustomer.classList.add('animate-pop-in');
+            domSpeechBubble.classList.add('animate-pop-in');
+
+            domOrderWrapper.className = `w-8 h-8 rounded-md border shadow-sm ${randomWrapper.colorClass} ${randomWrapper.cssExtra}`;
+            domOrderRibbon.className = `w-8 h-3 rounded-full shadow-sm ${randomRibbon.colorClass}`;
+            
+            // Display ordered flowers with quantities
+            domOrderFlowersContainer.innerHTML = '';
+            currentOrder.flowers.forEach(req => {
+                const fDiv = document.createElement('div');
+                fDiv.className = 'bg-pink-50 px-3 py-1 rounded-full border border-pink-100 flex items-center gap-1 shadow-sm text-sm';
+                fDiv.innerHTML = `<span>${req.flower.emoji}</span> <span class="font-bold text-gray-700">x${req.qty}</span>`;
+                domOrderFlowersContainer.appendChild(fDiv);
+            });
+
+            resetBouquet();
+        }
+
+        // --- STREAMING_CHUNK:Player Interactions & Dynamic Build... ---
+        function selectItem(type, itemData) {
+            if (type === 'flower') {
+                if (!playerBouquet.flowers[itemData.id]) {
+                    playerBouquet.flowers[itemData.id] = 0;
+                }
+                playerBouquet.flowers[itemData.id]++;
+                renderInventory(); // update badges
+            } else {
+                playerBouquet[type] = itemData;
+            }
+            updateBouquetVisuals();
+        }
+
+        function updateBouquetVisuals() {
+            // Update Wrapper
+            if (playerBouquet.wrapper) {
+                domBuildWrapper.className = `absolute bottom-0 left-0 w-full h-28 wrapper-shape shadow-lg z-20 transition-all duration-300 opacity-100 ${playerBouquet.wrapper.colorClass} ${playerBouquet.wrapper.cssExtra}`;
+            } else {
+                domBuildWrapper.className = `absolute bottom-0 left-0 w-full h-28 wrapper-shape bg-gray-200 shadow-inner z-20 transition-all duration-300 opacity-50`;
+            }
+
+            // Update Flowers (Multiple)
+            domBuildFlower.innerHTML = '';
+            for (const [flowerId, count] of Object.entries(playerBouquet.flowers)) {
+                const fData = FLOWERS.find(f => f.id === flowerId);
+                for (let i = 0; i < count; i++) {
+                    const span = document.createElement('span');
+                    span.innerText = fData.emoji;
+                    span.className = 'text-4xl hover:scale-110 transition-transform cursor-pointer drop-shadow-md';
+                    span.title = "คลิกเพื่อหยิบออก";
+                    // Allow clicking to remove flower
+                    span.onclick = (e) => {
+                        e.stopPropagation();
+                        playerBouquet.flowers[flowerId]--;
+                        if (playerBouquet.flowers[flowerId] === 0) delete playerBouquet.flowers[flowerId];
+                        renderInventory();
+                        updateBouquetVisuals();
+                    };
+                    domBuildFlower.appendChild(span);
+                }
+            }
+
+            // Update Ribbon
+            if (playerBouquet.ribbon) {
+                domBuildRibbon.classList.remove('scale-0');
+                domBuildRibbon.classList.add('scale-100');
+                const ribbonBand = domBuildRibbon.firstElementChild;
+                ribbonBand.className = `w-full h-full shadow-md relative ${playerBouquet.ribbon.colorClass}`;
+                ribbonBand.firstElementChild.className = `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-inherit rounded-full shadow-lg border-2 border-white/30`;
+            } else {
+                domBuildRibbon.classList.remove('scale-100');
+                domBuildRibbon.classList.add('scale-0');
+            }
+        }
+
+        function resetBouquet() {
+            playerBouquet = { wrapper: null, flowers: {}, ribbon: null };
+            renderInventory();
+            updateBouquetVisuals();
+        }
+
+        // --- STREAMING_CHUNK:Validating complex orders... ---
+        function submitOrder() {
+            const hasFlowers = Object.keys(playerBouquet.flowers).length > 0;
+            if (!playerBouquet.wrapper || !hasFlowers || !playerBouquet.ribbon) {
+                showToast("จัดช่อยังไม่เสร็จเลย ขาดของอยู่นะจ๊ะ!", "bg-orange-500");
+                return;
+            }
+
+            const isWrapperMatch = playerBouquet.wrapper.id === currentOrder.wrapper.id;
+            const isRibbonMatch = playerBouquet.ribbon.id === currentOrder.ribbon.id;
+
+            // Check flower accuracy
+            let isFlowerMatch = true;
+            let expectedTotalQty = 0;
+            
+            // 1. Check if we have the correct amount of EACH ordered flower
+            for (const req of currentOrder.flowers) {
+                expectedTotalQty += req.qty;
+                if ((playerBouquet.flowers[req.flower.id] || 0) !== req.qty) {
+                    isFlowerMatch = false;
+                    break;
+                }
+            }
+            
+            // 2. Check if player sneaked in extra unrequested flowers
+            let playerTotalQty = 0;
+            for (const count of Object.values(playerBouquet.flowers)) {
+                playerTotalQty += count;
+            }
+            if (playerTotalQty !== expectedTotalQty) {
+                isFlowerMatch = false;
+            }
+
+            if (isWrapperMatch && isFlowerMatch && isRibbonMatch) {
+                score += 1;
+                domScore.innerText = score;
+                showToast("สวยถูกใจมาก! ขอบคุณนะ 💖", "bg-green-500");
+                
+                domCustomer.style.transform = "translateY(-20px)";
+                setTimeout(() => { domCustomer.style.transform = "translateY(0)"; }, 200);
+
+                checkLevel(); // Check for level up
+
+                setTimeout(() => {
+                    generateNewCustomer();
+                }, 1000); 
+            } else {
+                let hint = "เอ๊ะ... เหมือนจะไม่ใช่อันที่สั่งนะ";
+                if (!isFlowerMatch) hint = "ชนิดหรือจำนวนดอกไม้ไม่ตรงกับที่สั่งนะ 😅";
+                else if (!isWrapperMatch) hint = "ลายกระดาษห่อไม่ตรงนะ 😅";
+                else if (!isRibbonMatch) hint = "สีริบบิ้นไม่ตรงนะ 😅";
+                
+                showToast(hint, "bg-red-400");
+            }
+        }
+
+        function showToast(message, colorClass) {
+            const toast = document.createElement('div');
+            toast.className = `toast-message text-white px-6 py-3 rounded-full shadow-xl font-semibold text-lg ${colorClass}`;
+            toast.innerText = message;
+            
+            notifArea.appendChild(toast);
+
+            // Remove element after animation ends (2 seconds)
+            setTimeout(() => {
+                if(notifArea.contains(toast)) {
+                    notifArea.removeChild(toast);
+                }
+            }, 2000);
+        }
+
+        // Start game
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
